@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Sparkles,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 import { useConverterStore } from '../store/useConverterStore';
 import { SAMPLE_PRESETS } from '../lib/samples';
@@ -21,6 +22,7 @@ export default function Header() {
     clearAll,
     loadSample,
     setShowArchModal,
+    setShowUserGuide,
   } = useConverterStore();
 
   const [samplesOpen, setSamplesOpen] = useState(false);
@@ -124,6 +126,17 @@ export default function Header() {
               </div>
             )}
           </div>
+
+          {/* User Guide Button */}
+          <button
+            id="open-user-guide-btn"
+            type="button"
+            onClick={() => setShowUserGuide(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors shadow-2xs"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="hidden sm:inline">User Guide</span>
+          </button>
 
           {/* Architecture / Next.js Specs Modal Trigger */}
           <button

@@ -29,9 +29,12 @@ import {
   FileCode,
   CheckCircle2,
   RotateCcw,
+  Split,
+  FileText,
 } from 'lucide-react';
 import { useConverterStore } from '../store/useConverterStore';
 import { downloadFile, calculateReadTime } from '../lib/pdfUtils';
+import OriginalPdfViewer from './OriginalPdfViewer';
 import { toast } from 'sonner';
 
 export default function DualPaneEditor() {
@@ -220,6 +223,47 @@ export default function DualPaneEditor() {
           {/* View Mode Switcher */}
           <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100">
             <button
+              id="view-compare-btn"
+              type="button"
+              onClick={() => setViewMode('compare')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'compare'
+                  ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-indigo-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Compare Original PDF with Converted Markdown Preview"
+            >
+              <Split className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Compare</span>
+            </button>
+            <button
+              id="view-split-btn"
+              type="button"
+              onClick={() => setViewMode('split')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'split'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Split View: Raw Editor & Live Preview"
+            >
+              <Columns className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Split</span>
+            </button>
+            <button
+              id="view-pdf-only-btn"
+              type="button"
+              onClick={() => setViewMode('pdf')}
+              className={`p-1.5 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'pdf'
+                  ? 'bg-white text-red-700 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Original PDF Document Only"
+            >
+              <FileText className="w-3.5 h-3.5 text-red-500" />
+            </button>
+            <button
               id="view-editor-only-btn"
               type="button"
               onClick={() => setViewMode('editor')}
@@ -228,22 +272,9 @@ export default function DualPaneEditor() {
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
-              title="Editor Only"
+              title="Raw Editor Only"
             >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            <button
-              id="view-split-btn"
-              type="button"
-              onClick={() => setViewMode('split')}
-              className={`p-1.5 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'split'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Split View"
-            >
-              <Columns className="w-4 h-4" />
+              <Edit3 className="w-3.5 h-3.5" />
             </button>
             <button
               id="view-preview-only-btn"
@@ -256,7 +287,7 @@ export default function DualPaneEditor() {
               }`}
               title="Preview Only"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -490,7 +521,17 @@ export default function DualPaneEditor() {
 
       {/* Main Dual-Pane Content Canvas */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Pane: Markdown Raw Editor */}
+        {/* Full PDF Only Mode */}
+        {viewMode === 'pdf' && (
+          <OriginalPdfViewer className="w-full h-full" />
+        )}
+
+        {/* Compare Mode Left Pane: Original PDF Document */}
+        {viewMode === 'compare' && (
+          <OriginalPdfViewer className="w-full lg:w-1/2 h-full" />
+        )}
+
+        {/* Split/Editor Mode Left Pane: Markdown Raw Editor */}
         {(viewMode === 'split' || viewMode === 'editor') && (
           <div
             className={`flex flex-col bg-white border-r border-slate-200 overflow-hidden ${
@@ -546,8 +587,8 @@ export default function DualPaneEditor() {
           </div>
         )}
 
-        {/* Right Pane: Live Rendered Preview */}
-        {(viewMode === 'split' || viewMode === 'preview') && (
+        {/* Right Pane: Live Rendered Preview (Used in Split, Compare, or Preview modes) */}
+        {(viewMode === 'split' || viewMode === 'compare' || viewMode === 'preview') && (
           <div
             ref={previewRef}
             onScroll={handlePreviewScroll}

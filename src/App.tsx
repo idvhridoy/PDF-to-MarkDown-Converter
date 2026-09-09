@@ -7,6 +7,7 @@ import Header from './components/Header';
 import DropzoneArea from './components/DropzoneArea';
 import DualPaneEditor from './components/DualPaneEditor';
 import ArchitectureModal from './components/ArchitectureModal';
+import UserGuideModal from './components/UserGuideModal';
 import { Toaster } from 'sonner';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <DualPaneEditor />
       </main>
       <ArchitectureModal />
+      <UserGuideModal />
     </div>
   );
 }

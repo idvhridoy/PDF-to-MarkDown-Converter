@@ -1,15 +1,16 @@
 import { create } from 'zustand';
-import type { ConvertedDocument, ConversionOptions, ConversionMode } from '../types';
-import { createSampleDocument } from '../lib/samples';
+import type { ConvertedDocument, ConversionOptions, ConversionMode, ViewMode } from '../types';
+import { createSampleDocument, generateSamplePdfBlob } from '../lib/samples';
 
 interface ConverterState {
   documents: ConvertedDocument[];
   activeDocId: string | null;
   options: ConversionOptions;
-  viewMode: 'split' | 'editor' | 'preview';
+  viewMode: ViewMode;
   syncScroll: boolean;
   isConverting: boolean;
   showArchModal: boolean;
+  showUserGuide: boolean;
   searchQuery: string;
 
   // Actions
@@ -20,12 +21,13 @@ interface ConverterState {
   setActiveDocId: (id: string) => void;
   updateActiveMarkdown: (markdown: string) => void;
   updateOptions: (updates: Partial<ConversionOptions>) => void;
-  setViewMode: (mode: 'split' | 'editor' | 'preview') => void;
+  setViewMode: (mode: ViewMode) => void;
   setSyncScroll: (enabled: boolean) => void;
   setShowArchModal: (show: boolean) => void;
+  setShowUserGuide: (show: boolean) => void;
   setSearchQuery: (query: string) => void;
   clearAll: () => void;
-  loadSample: (presetId: string) => void;
+  loadSample: (presetId: string) => Promise<void>;
   convertFile: (file: File) => Promise<ConvertedDocument | null>;
 }
 
@@ -46,6 +48,7 @@ export const useConverterStore = create<ConverterState>((set, get) => ({
   syncScroll: true,
   isConverting: false,
   showArchModal: false,
+  showUserGuide: false,
   searchQuery: '',
 
   setDocuments: (docs) => set({ documents: docs }),
@@ -101,12 +104,20 @@ export const useConverterStore = create<ConverterState>((set, get) => ({
 
   setShowArchModal: (showArchModal) => set({ showArchModal }),
 
+  setShowUserGuide: (showUserGuide) => set({ showUserGuide }),
+
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
   clearAll: () => set({ documents: [], activeDocId: null }),
 
-  loadSample: (presetId) => {
-    const sample = createSampleDocument(presetId);
+  loadSample: async (presetId) => {
+    let blobUrl: string | undefined;
+    try {
+      blobUrl = await generateSamplePdfBlob(presetId);
+    } catch {
+      // ignore
+    }
+    const sample = createSampleDocument(presetId, blobUrl);
     set((state) => ({
       documents: [sample, ...state.documents.filter((d) => d.id !== sample.id)],
       activeDocId: sample.id,
@@ -117,6 +128,7 @@ export const useConverterStore = create<ConverterState>((set, get) => ({
     const { options, addDocument, updateDocument } = get();
     const docId = `doc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const startTime = performance.now();
+    const pdfBlobUrl = URL.createObjectURL(file);
 
     const initialDoc: ConvertedDocument = {
       id: docId,
@@ -129,6 +141,7 @@ export const useConverterStore = create<ConverterState>((set, get) => ({
       currentStep: 'Streaming PDF into in-memory buffer...',
       createdAt: Date.now(),
       modeUsed: options.mode,
+      pdfBlobUrl,
     };
 
     addDocument(initialDoc);
@@ -183,6 +196,7 @@ export const useConverterStore = create<ConverterState>((set, get) => ({
         currentStep: 'Conversion Complete',
         durationMs: elapsed,
         modeUsed: data.modeUsed || options.mode,
+        pdfBlobUrl,
       };
 
       updateDocument(docId, finalDoc);

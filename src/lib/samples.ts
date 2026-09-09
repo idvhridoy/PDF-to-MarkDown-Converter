@@ -1,3 +1,4 @@
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import type { ConvertedDocument, SampleDocumentPreset } from '../types';
 
 export const SAMPLE_PRESETS: SampleDocumentPreset[] = [
@@ -225,7 +226,128 @@ Through spatial topological sorting, reading order violations are reduced by **8
 `,
 };
 
-export function createSampleDocument(presetId: string): ConvertedDocument {
+export async function generateSamplePdfBlob(presetId: string): Promise<string> {
+  const preset = SAMPLE_PRESETS.find((p) => p.id === presetId) || SAMPLE_PRESETS[0];
+  const doc = await PDFDocument.create();
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+
+  // Page 1
+  const page1 = doc.addPage([595, 842]);
+  page1.drawText(preset.title, {
+    x: 40,
+    y: 790,
+    size: 20,
+    font: fontBold,
+    color: rgb(0.1, 0.15, 0.3),
+  });
+
+  page1.drawText(`Category: ${preset.category}  |  DocuMark Verified Original PDF`, {
+    x: 40,
+    y: 765,
+    size: 10,
+    font: fontRegular,
+    color: rgb(0.4, 0.4, 0.5),
+  });
+
+  page1.drawLine({
+    start: { x: 40, y: 755 },
+    end: { x: 555, y: 755 },
+    thickness: 1,
+    color: rgb(0.8, 0.85, 0.9),
+  });
+
+  page1.drawText('1. Executive Summary & Overview', {
+    x: 40,
+    y: 725,
+    size: 14,
+    font: fontBold,
+    color: rgb(0.15, 0.2, 0.35),
+  });
+
+  const lines = [
+    'This original document demonstrates high-fidelity PDF-to-Markdown translation.',
+    'It contains structured tabular data, multi-column headers, bullet checklists,',
+    'and financial or technical metrics preserved in-memory.',
+    '',
+    'Notice how DocuMark extracts table columns into GitHub Flavored Markdown (GFM)',
+    'syntax with aligned headers and border dividers.',
+  ];
+
+  let y = 695;
+  for (const line of lines) {
+    if (line) {
+      page1.drawText(line, {
+        x: 40,
+        y,
+        size: 11,
+        font: fontRegular,
+        color: rgb(0.2, 0.25, 0.3),
+      });
+    }
+    y -= 18;
+  }
+
+  // Draw Sample Table
+  page1.drawText('2. Data Breakdown & Key Metrics Table', {
+    x: 40,
+    y: y - 15,
+    size: 14,
+    font: fontBold,
+    color: rgb(0.15, 0.2, 0.35),
+  });
+
+  y -= 45;
+  // Header row
+  page1.drawRectangle({
+    x: 40,
+    y: y - 5,
+    width: 515,
+    height: 24,
+    color: rgb(0.9, 0.93, 0.98),
+  });
+  page1.drawText('Metric / Indicator', { x: 50, y, size: 10, font: fontBold, color: rgb(0.1, 0.1, 0.2) });
+  page1.drawText('Prior Period', { x: 230, y, size: 10, font: fontBold, color: rgb(0.1, 0.1, 0.2) });
+  page1.drawText('Current Period', { x: 340, y, size: 10, font: fontBold, color: rgb(0.1, 0.1, 0.2) });
+  page1.drawText('Change (%)', { x: 460, y, size: 10, font: fontBold, color: rgb(0.1, 0.1, 0.2) });
+
+  const tableData = [
+    ['Subscription Net Revenue', '$98.2M', '$124.7M', '+27.0%'],
+    ['Gross Profit Margin', '73.6%', '76.2%', '+260 bps'],
+    ['Annual Recurring Revenue', '$440.0M', '$520.1M', '+18.2%'],
+    ['Net Revenue Retention', '114%', '119%', '+5.0%'],
+    ['Operating Cash Flow', '$15.2M', '$26.1M', '+71.7%'],
+  ];
+
+  for (const row of tableData) {
+    y -= 22;
+    page1.drawLine({
+      start: { x: 40, y: y + 17 },
+      end: { x: 555, y: y + 17 },
+      thickness: 0.5,
+      color: rgb(0.85, 0.85, 0.9),
+    });
+    page1.drawText(row[0], { x: 50, y: y + 4, size: 9.5, font: fontRegular, color: rgb(0.15, 0.15, 0.2) });
+    page1.drawText(row[1], { x: 230, y: y + 4, size: 9.5, font: fontRegular, color: rgb(0.3, 0.3, 0.3) });
+    page1.drawText(row[2], { x: 340, y: y + 4, size: 9.5, font: fontBold, color: rgb(0.1, 0.45, 0.2) });
+    page1.drawText(row[3], { x: 460, y: y + 4, size: 9.5, font: fontRegular, color: rgb(0.2, 0.2, 0.4) });
+  }
+
+  // Footer
+  page1.drawText(`Page 1 of 1 — DocuMark Original Document Pipeline`, {
+    x: 40,
+    y: 35,
+    size: 9,
+    font: fontRegular,
+    color: rgb(0.5, 0.5, 0.6),
+  });
+
+  const pdfBytes = await doc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  return URL.createObjectURL(blob);
+}
+
+export function createSampleDocument(presetId: string, pdfBlobUrl?: string): ConvertedDocument {
   const preset = SAMPLE_PRESETS.find((p) => p.id === presetId) || SAMPLE_PRESETS[0];
   const markdown = SAMPLE_MARKDOWN[presetId] || SAMPLE_MARKDOWN['sample-financial'];
 
@@ -242,5 +364,6 @@ export function createSampleDocument(presetId: string): ConvertedDocument {
     durationMs: 420,
     createdAt: Date.now(),
     modeUsed: 'fast',
+    pdfBlobUrl,
   };
 }

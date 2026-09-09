@@ -11,6 +11,8 @@ export interface ConversionOptions {
 
 export type DocumentStatus = 'idle' | 'uploading' | 'processing' | 'ready' | 'error';
 
+export type ViewMode = 'split' | 'editor' | 'preview' | 'compare' | 'pdf';
+
 export interface ConvertedDocument {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ export interface ConvertedDocument {
   error?: string;
   createdAt: number;
   modeUsed: ConversionMode;
+  pdfBlobUrl?: string;
 }
 
 export interface SampleDocumentPreset {

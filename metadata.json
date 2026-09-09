@@ -1,0 +1,6 @@
+{
+  "name": "DocuMark - PDF to Markdown Converter",
+  "description": "Fast, privacy-focused PDF to Markdown converter with dual-pane real-time editor, GFM live preview, OCR & table extraction, and bulk export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
